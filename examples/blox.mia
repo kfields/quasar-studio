@@ -1,0 +1,83 @@
+#
+# Blocks World
+#
+
+Table: Table1
+  isClear True
+
+Block: Block1
+  onTop Table1
+
+Block: Block2
+  onTop Block1
+
+Block: Block3
+  onTop Block2
+  isClear True
+
+Achieve: stack Block1 on: Block2
+Achieve: stack Block2 on: Block3
+
+def (blox)
+
+  def (_impasse)
+    where
+      $g ^Goal status Active
+      -->
+        * /$g !
+      !=>
+        halt
+
+  def (+ $g ^Goal)
+    + $g status Active
+
+  def (- $g ^Goal)
+    - $g status Active
+
+  def (stack $x on: $y -> $g)
+    where
+      not $x isClear True
+      -->
+        /clear $x
+      ==>
+        return
+
+    where
+      not $y isClear True
+      -->
+        /clear $y
+      ==>
+        return
+
+    where
+      $x onTop $z
+      -->
+        - $x onTop $z
+
+    + $x onTop $y; - $g
+
+  def (clear $x)
+    where
+      $x beneath $y
+      $z isClear True
+      $z != $x
+      $z != $y
+      -->
+        * /stack $y on: $z
+
+  def (- $x onTop $y)
+    - $y beneath $x
+    + $y isClear True
+
+  def (+ $x onTop $y)
+    where
+      (Block: $y) isClear True
+      -->
+        - $y isClear True
+
+    where
+      $x onTop $y
+      -->
+        + $y beneath $x
+
+blox

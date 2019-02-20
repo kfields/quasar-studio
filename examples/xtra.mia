@@ -1,0 +1,4 @@
+def ($x likes $y with: $z)
+  | "#{$x} likes #{$y} with #{$z}"
+
++ Bob likes Tuna with: Cheese

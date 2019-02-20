@@ -1,0 +1,13 @@
+#
+# Hello World
+#
+
+def (hello)
+
+  def (say $t)
+    | $t
+
+  say "Hello World"
+  say "Goodbye World"
+
+hello

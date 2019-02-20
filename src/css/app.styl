@@ -1,0 +1,69 @@
+// app global css
+body {
+  background-color: #222222;
+}
+
+.button-column {
+  min-height: 100vh;
+  background-color: #222222;
+}
+
+.button-column > * {
+  margin-top: 8px;
+  display: block;
+}
+
+.sidebar {
+  min-height: 100vh !important;
+  // background-color: #36454F;
+  color: white;
+}
+
+.filetree {
+  list-style: none;
+  cursor: pointer;
+}
+.filetree ul {
+  padding: 0px;
+  margin-left: 16px;
+}
+.filetree-expand {
+  display: inline-block;
+  padding-right: .5em;
+}
+.channelbar {
+  list-style: none;
+  color: white;
+  margin: 0 auto;
+  padding: 0;
+}
+.channelbar-item {
+  display: inline-block;
+  padding: .5em;
+  cursor: pointer;
+}
+.channelbar-item-close {
+  display: inline-block;
+  visibility: hidden;
+}
+.channelbar-item.router-link-exact-active {
+  background-color:#111111;
+}
+.router-link-exact-active .channelbar-item-close, .channelbar-item:hover .channelbar-item-close {
+  visibility: visible
+}
+.gutter {
+}
+
+.gutter.gutter-horizontal {
+  cursor: ew-resize;
+  min-height: 100vh;
+}
+
+.gutter.gutter-vertical {
+  cursor: ns-resize;
+}
+
+.split.split-horizontal, .gutter.gutter-horizontal {
+  float: left;
+}

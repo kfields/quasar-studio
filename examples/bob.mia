@@ -1,0 +1,13 @@
+def ($x likes Pizza)
+  | $x + " says Yum!!!"
+
+Bob ::
+  likes Fish
+  likes Pizza
+
++ Bob likes Cheese
+
+$x = Bob
+# + $x
+$y = Bob likes Tuna with: Cheese
++ $y

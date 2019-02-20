@@ -1,0 +1,15 @@
+Bob ::
+  likes Fish
+
+def (say $t)
+  | $t
+
+where
+  $x likes Fish
+  -->
+    say $x
+
+where
+  $x likes Cheese
+  -->
+    say $x
