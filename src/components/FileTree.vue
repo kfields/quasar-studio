@@ -11,7 +11,7 @@
       tabindex="0"
       @keydown.stop="handleKeydown"
     >
-      <q-icon :name="nodeIcon" size="14px" class="filetree-node-icon" />
+      <q-icon :name="nodeIcon" size="14px" :class="['filetree-node-icon', nodeIconClass]" />
       <span class="label-text">{{ node.label }}</span>
     </span>
     <q-menu
@@ -170,7 +170,59 @@ export default {
       if (this.isDirectory) {
         return this.expanded ? 'folder_open' : 'folder'
       }
+      const normalizedName = this.getNormalizedFileName(this.node?.label)
+      const normalizedPath = this.getNormalizedNodePath(this.node?.path)
+      if (normalizedName === 'package.json') return 'inventory'
+      if (normalizedName === 'dockerfile') return 'view_in_ar'
+      if (normalizedName === 'license' || normalizedName === 'license.md') return 'gavel'
+      if (normalizedName === '.env' || normalizedName.startsWith('.env.')) return 'key'
+      if (normalizedName === 'readme' || normalizedName === 'readme.md' || normalizedName === 'readme.txt') return 'menu_book'
+      if (['package-lock.json', 'yarn.lock', 'pnpm-lock.yaml', 'bun.lockb'].includes(normalizedName)) return 'lock'
+      if (normalizedPath.includes('/.github/workflows/') && ['yml', 'yaml'].includes(this.getFileExtension(normalizedName))) {
+        return 'precision_manufacturing'
+      }
+      const extension = this.getFileExtension(this.node?.label)
+      if (['js', 'mjs', 'cjs', 'jsx'].includes(extension)) return 'javascript'
+      if (['ts', 'tsx'].includes(extension)) return 'data_object'
+      if (['json', 'yml', 'yaml', 'toml', 'ini'].includes(extension)) return 'settings'
+      if (['md', 'markdown', 'txt', 'rst'].includes(extension)) return 'article'
+      if (['html', 'htm', 'xml', 'svg'].includes(extension)) return 'code'
+      if (['css', 'scss', 'sass', 'less'].includes(extension)) return 'palette'
+      if (['vue'].includes(extension)) return 'web'
+      if (['py', 'rb', 'php', 'go', 'rs', 'java', 'c', 'cpp', 'h', 'hpp'].includes(extension)) return 'terminal'
+      if (['png', 'jpg', 'jpeg', 'gif', 'webp', 'ico', 'bmp'].includes(extension)) return 'image'
+      if (['mp4', 'webm', 'mov', 'avi', 'mkv'].includes(extension)) return 'movie'
+      if (['mp3', 'wav', 'ogg', 'flac'].includes(extension)) return 'audiotrack'
+      if (['zip', 'tar', 'gz', 'tgz', '7z', 'rar'].includes(extension)) return 'inventory_2'
+      if (['pdf'].includes(extension)) return 'picture_as_pdf'
       return 'description'
+    },
+    nodeIconClass () {
+      if (this.isDirectory) {
+        return 'filetree-node-icon--folder'
+      }
+      const normalizedName = this.getNormalizedFileName(this.node?.label)
+      const normalizedPath = this.getNormalizedNodePath(this.node?.path)
+      if (normalizedName === 'package.json') return 'filetree-node-icon--package'
+      if (normalizedName === 'dockerfile') return 'filetree-node-icon--docker'
+      if (normalizedName === 'license' || normalizedName === 'license.md') return 'filetree-node-icon--license'
+      if (normalizedName === '.env' || normalizedName.startsWith('.env.')) return 'filetree-node-icon--env'
+      if (normalizedName === 'readme' || normalizedName === 'readme.md' || normalizedName === 'readme.txt') return 'filetree-node-icon--readme'
+      if (['package-lock.json', 'yarn.lock', 'pnpm-lock.yaml', 'bun.lockb'].includes(normalizedName)) return 'filetree-node-icon--lockfile'
+      if (normalizedPath.includes('/.github/workflows/') && ['yml', 'yaml'].includes(this.getFileExtension(normalizedName))) {
+        return 'filetree-node-icon--workflow'
+      }
+      const extension = this.getFileExtension(this.node?.label)
+      if (['js', 'mjs', 'cjs', 'jsx', 'ts', 'tsx', 'vue', 'html', 'htm', 'xml', 'css', 'scss', 'sass', 'less'].includes(extension)) {
+        return 'filetree-node-icon--code'
+      }
+      if (['json', 'yml', 'yaml', 'toml', 'ini'].includes(extension)) return 'filetree-node-icon--config'
+      if (['md', 'markdown', 'txt', 'rst'].includes(extension)) return 'filetree-node-icon--docs'
+      if (['png', 'jpg', 'jpeg', 'gif', 'webp', 'ico', 'bmp', 'svg'].includes(extension)) return 'filetree-node-icon--image'
+      if (['mp4', 'webm', 'mov', 'avi', 'mkv', 'mp3', 'wav', 'ogg', 'flac'].includes(extension)) return 'filetree-node-icon--media'
+      if (['zip', 'tar', 'gz', 'tgz', '7z', 'rar'].includes(extension)) return 'filetree-node-icon--archive'
+      if (['pdf'].includes(extension)) return 'filetree-node-icon--pdf'
+      return 'filetree-node-icon--default'
     }
   },
   methods: {
@@ -210,6 +262,21 @@ export default {
     },
     normalizeName (name) {
       return (name || '').trim()
+    },
+    getNormalizedFileName (fileName) {
+      if (!fileName || typeof fileName !== 'string') return ''
+      return fileName.trim().toLowerCase()
+    },
+    getNormalizedNodePath (nodePath) {
+      if (!nodePath || typeof nodePath !== 'string') return ''
+      return nodePath.trim().toLowerCase().replaceAll('\\', '/')
+    },
+    getFileExtension (fileName) {
+      if (!fileName || typeof fileName !== 'string') return ''
+      const normalizedName = this.getNormalizedFileName(fileName)
+      const dotIndex = normalizedName.lastIndexOf('.')
+      if (dotIndex <= 0 || dotIndex === normalizedName.length - 1) return ''
+      return normalizedName.slice(dotIndex + 1)
     },
     isValidNodeName (name) {
       if (!name) return false
