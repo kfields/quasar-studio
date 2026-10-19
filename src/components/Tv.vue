@@ -38,7 +38,10 @@ export default {
     openFile (filePath) {
       const label = filePath.split(/[\\/]/).pop() || filePath
       const to = `/edit/${encodeURIComponent(filePath)}`
-      this.items.push({ label, to })
+      const existingIndex = this.items.findIndex((item) => item.to === to)
+      if (existingIndex === -1) {
+        this.items.push({ label, to })
+      }
       this.$router.push(to)
     },
     closeFile (index) {
