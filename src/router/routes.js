@@ -6,6 +6,7 @@ export default [
     children: [
       { path: '', component: () => import('@/pages/index.vue') },
       { path: 'graph', component: () => import('@/pages/graph.vue') },
+      { path: 'settings', component: () => import('@/pages/settings.vue') },
       { path: 'edit/:id', component: () => import('@/pages/edit.vue'), props: true }
     ]
   },

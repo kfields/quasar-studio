@@ -3,6 +3,7 @@
     <div class="button-column" style="float: left">
       <q-btn flat icon="far fa-copy" to="/"/>
       <q-btn flat icon="fas fa-share-alt" to="/graph"/>
+      <q-btn flat icon="settings" to="/settings"/>
       <q-btn
         flat
         :icon="$q.dark.isActive ? 'light_mode' : 'dark_mode'"
