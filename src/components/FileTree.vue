@@ -4,7 +4,7 @@
       <q-icon v-if="expanded" name="fas fa-caret-up" size=".75em"/>
       <q-icon v-else name="fas fa-caret-right" size=".75em"/>
     </div>
-    <span v-if="!isRoot" class="label">{{ node.label }}</span>
+    <span v-if="!isRoot" class="label" :class="{ 'is-active': isActiveFile }">{{ node.label }}</span>
     <ul v-if="expanded && children.length">
       <FileTree v-for="(child, index) in children" :node="child" :key="index"/>
     </ul>
@@ -35,7 +35,25 @@ export default {
       await this.readDir()
     }
   },
+  computed: {
+    activeFilePath () {
+      const routePath = this.$route?.params?.id
+      if (!routePath || Array.isArray(routePath)) return ''
+      return this.decodeFilePath(routePath)
+    },
+    isActiveFile () {
+      if (this.isDirectory) return false
+      return this.activeFilePath === this.node?.path
+    }
+  },
   methods: {
+    decodeFilePath (filePath) {
+      try {
+        return decodeURIComponent(filePath)
+      } catch (error) {
+        return filePath
+      }
+    },
     getStudioFs () {
       return window.studioFs || null
     },

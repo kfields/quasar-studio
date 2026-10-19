@@ -25,6 +25,14 @@ body.body--dark .button-column {
   display: block;
 }
 
+.button-column .q-btn {
+  color: #2d2d2d;
+}
+
+body.body--dark .button-column .q-btn {
+  color: #f0f0f0;
+}
+
 .sidebar {
   min-height: 100vh !important;
   color: inherit;
@@ -44,11 +52,47 @@ body.body--dark .sidebar-content {
 .filetree {
   list-style: none;
   cursor: pointer;
+  border-radius: 4px;
 }
 
 .filetree ul {
   padding: 0;
   margin-left: 16px;
+}
+
+.filetree > .label,
+.filetree > .filetree-expand {
+  color: #2d2d2d;
+}
+
+body.body--dark .filetree > .label,
+body.body--dark .filetree > .filetree-expand {
+  color: #e8e8e8;
+}
+
+.filetree > .label {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.filetree:hover > .label {
+  background-color: #ebebeb;
+}
+
+body.body--dark .filetree:hover > .label {
+  background-color: #2a2a2a;
+}
+
+.filetree > .label.is-active {
+  background-color: #d7e8ff;
+  color: #0b3b78;
+  font-weight: 600;
+}
+
+body.body--dark .filetree > .label.is-active {
+  background-color: #1f3b63;
+  color: #d8e8ff;
 }
 
 .filetree-expand {
@@ -67,6 +111,16 @@ body.body--dark .sidebar-content {
   display: inline-block;
   padding: 0.5em;
   cursor: pointer;
+  border-radius: 4px;
+  transition: background-color 0.15s ease-in-out;
+}
+
+.channelbar-item:hover {
+  background-color: #e6e6e6;
+}
+
+body.body--dark .channelbar-item:hover {
+  background-color: #262626;
 }
 
 .channelbar-item-close {
