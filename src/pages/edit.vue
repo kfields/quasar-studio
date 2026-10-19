@@ -6,10 +6,18 @@
 </template>
 
 <script>
-import { EditorState } from '@codemirror/state'
+import { Compartment, EditorState } from '@codemirror/state'
 import { EditorView, keymap } from '@codemirror/view'
 import { basicSetup } from 'codemirror'
 import { defaultKeymap } from '@codemirror/commands'
+import { css } from '@codemirror/lang-css'
+import { html } from '@codemirror/lang-html'
+import { javascript } from '@codemirror/lang-javascript'
+import { json } from '@codemirror/lang-json'
+import { markdown } from '@codemirror/lang-markdown'
+import { python } from '@codemirror/lang-python'
+import { sql } from '@codemirror/lang-sql'
+import { yaml } from '@codemirror/lang-yaml'
 
 const darkEditorTheme = EditorView.theme({
   '&': {
@@ -39,6 +47,8 @@ const darkEditorTheme = EditorView.theme({
   }
 }, { dark: true })
 
+const languageCompartment = new Compartment()
+
 export default {
   name: 'EditPage',
   props: [
@@ -60,7 +70,8 @@ export default {
         this.loadError = ''
         if (this.cm) {
           this.cm.dispatch({
-            changes: { from: 0, to: this.cm.state.doc.length, insert: content }
+            changes: { from: 0, to: this.cm.state.doc.length, insert: content },
+            effects: languageCompartment.reconfigure(this.getLanguageExtension(to.params.id))
           })
         }
         next()
@@ -83,16 +94,42 @@ export default {
         return filePath
       }
     },
+    getFileExtension (filePath) {
+      const decodedPath = this.decodeFilePath(filePath || '')
+      const parts = decodedPath.split('/')
+      const fileName = parts[parts.length - 1] || ''
+      const segments = fileName.split('.')
+      if (segments.length < 2) return ''
+      return segments[segments.length - 1].toLowerCase()
+    },
+    getLanguageExtension (filePath) {
+      const extension = this.getFileExtension(filePath)
+      if (['js', 'mjs', 'cjs', 'jsx'].includes(extension)) {
+        return javascript({ jsx: true })
+      }
+      if (['ts', 'tsx'].includes(extension)) {
+        return javascript({ typescript: true, jsx: true })
+      }
+      if (extension === 'json') return json()
+      if (['html', 'htm', 'vue'].includes(extension)) return html()
+      if (extension === 'css') return css()
+      if (['md', 'markdown'].includes(extension)) return markdown()
+      if (extension === 'py') return python()
+      if (['sql', 'psql'].includes(extension)) return sql()
+      if (['yaml', 'yml'].includes(extension)) return yaml()
+      return []
+    },
     async loadContent (filePath) {
       if (!window.studioFs || !filePath) return ''
       return window.studioFs.readFile(this.decodeFilePath(filePath))
     },
-    getEditorExtensions () {
+    getEditorExtensions (filePath) {
       return [
         basicSetup,
         keymap.of(defaultKeymap),
         EditorView.lineWrapping,
-        darkEditorTheme
+        darkEditorTheme,
+        languageCompartment.of(this.getLanguageExtension(filePath))
       ]
     },
     async loadEditor () {
@@ -101,7 +138,7 @@ export default {
         this.loadError = ''
         const state = EditorState.create({
           doc: starter,
-          extensions: this.getEditorExtensions()
+          extensions: this.getEditorExtensions(this.id)
         })
         this.cm = new EditorView({
           state,
@@ -111,7 +148,7 @@ export default {
         this.loadError = `Unable to load file: ${error?.message || String(error)}`
         const state = EditorState.create({
           doc: '',
-          extensions: this.getEditorExtensions()
+          extensions: this.getEditorExtensions(this.id)
         })
         this.cm = new EditorView({
           state,
