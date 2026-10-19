@@ -2,7 +2,7 @@
   <q-layout view="lHh Lpr lFf">
     <q-splitter
       v-model="splitterModel"
-      style="height: 400px"
+      style="height: 100vh"
     >
     <template v-slot:before>
       <Sidebar/>
@@ -23,7 +23,7 @@ import Tv from '@/components/Tv.vue'
 export default {
   setup () {
     return {
-      splitterModel: ref(50) // start at 50%
+      splitterModel: ref(25) // start at 50%
     }
   },
   name: 'LayoutDefault',

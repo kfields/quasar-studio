@@ -11,6 +11,34 @@ import { EditorView, keymap } from '@codemirror/view'
 import { basicSetup } from 'codemirror'
 import { defaultKeymap } from '@codemirror/commands'
 
+const darkEditorTheme = EditorView.theme({
+  '&': {
+    color: '#d4d4d4',
+    backgroundColor: '#1e1e1e',
+    minHeight: '100%'
+  },
+  '.cm-content': {
+    caretColor: '#ffffff'
+  },
+  '.cm-cursor, .cm-dropCursor': {
+    borderLeftColor: '#ffffff'
+  },
+  '.cm-selectionBackground, .cm-content ::selection': {
+    backgroundColor: '#264f78'
+  },
+  '.cm-gutters': {
+    backgroundColor: '#252526',
+    color: '#858585',
+    border: 'none'
+  },
+  '.cm-activeLine': {
+    backgroundColor: '#2a2d2e'
+  },
+  '.cm-activeLineGutter': {
+    backgroundColor: '#2a2d2e'
+  }
+}, { dark: true })
+
 export default {
   name: 'EditPage',
   props: [
@@ -59,17 +87,21 @@ export default {
       if (!window.studioFs || !filePath) return ''
       return window.studioFs.readFile(this.decodeFilePath(filePath))
     },
+    getEditorExtensions () {
+      return [
+        basicSetup,
+        keymap.of(defaultKeymap),
+        EditorView.lineWrapping,
+        darkEditorTheme
+      ]
+    },
     async loadEditor () {
       try {
         const starter = await this.loadContent(this.id)
         this.loadError = ''
         const state = EditorState.create({
           doc: starter,
-          extensions: [
-            basicSetup,
-            keymap.of(defaultKeymap),
-            EditorView.lineWrapping
-          ]
+          extensions: this.getEditorExtensions()
         })
         this.cm = new EditorView({
           state,
@@ -79,11 +111,7 @@ export default {
         this.loadError = `Unable to load file: ${error?.message || String(error)}`
         const state = EditorState.create({
           doc: '',
-          extensions: [
-            basicSetup,
-            keymap.of(defaultKeymap),
-            EditorView.lineWrapping
-          ]
+          extensions: this.getEditorExtensions()
         })
         this.cm = new EditorView({
           state,
