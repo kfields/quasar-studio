@@ -110,6 +110,30 @@ body.body--dark .filetree > .label.is-active {
   color: #d8e8ff;
 }
 
+.filetree.is-ignored-node > .label:not(.is-active) {
+  color: #9ca3af;
+}
+
+body.body--dark .filetree.is-ignored-node > .label:not(.is-active) {
+  color: #6b7280;
+}
+
+.filetree.is-ignored-node > .label:not(.is-active) .filetree-node-icon {
+  color: #9ca3af;
+}
+
+body.body--dark .filetree.is-ignored-node > .label:not(.is-active) .filetree-node-icon {
+  color: #6b7280;
+}
+
+.filetree.is-ignored-node > .filetree-expand {
+  color: #9ca3af;
+}
+
+body.body--dark .filetree.is-ignored-node > .filetree-expand {
+  color: #6b7280;
+}
+
 .filetree-node-icon {
   color: #7b7b7b;
 }

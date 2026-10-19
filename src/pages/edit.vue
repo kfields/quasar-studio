@@ -64,46 +64,41 @@ export default {
       }
     }
   },
-  beforeRouteUpdate (to, from, next) {
+  async beforeRouteUpdate (to, from) {
     if (this.isDirty) {
       const shouldLeave = window.confirm('You have unsaved changes. Leave this file without saving?')
       if (!shouldLeave) {
-        next(false)
-        return
+        return false
       }
       this.setDirtyState(false)
     }
-    this.loadContent(to.params.id)
-      .then((content) => {
-        this.loadError = ''
-        if (this.cm) {
-          this.isApplyingContent = true
-          this.lastSavedContent = content
-          this.cm.dispatch({
-            changes: { from: 0, to: this.cm.state.doc.length, insert: content },
-            effects: languageCompartment.reconfigure(this.getLanguageExtension(to.params.id))
-          })
-          this.isApplyingContent = false
-          this.setDirtyState(false)
-        }
-        next()
-      })
-      .catch((error) => {
-        this.loadError = `Unable to load file: ${error?.message || String(error)}`
-        next()
-      })
+
+    try {
+      const content = await this.loadContent(to.params.id)
+      this.loadError = ''
+      if (this.cm) {
+        this.isApplyingContent = true
+        this.lastSavedContent = content
+        this.cm.dispatch({
+          changes: { from: 0, to: this.cm.state.doc.length, insert: content },
+          effects: languageCompartment.reconfigure(this.getLanguageExtension(to.params.id))
+        })
+        this.isApplyingContent = false
+        this.setDirtyState(false)
+      }
+    } catch (error) {
+      this.loadError = `Unable to load file: ${error?.message || String(error)}`
+    }
   },
-  beforeRouteLeave (to, from, next) {
+  beforeRouteLeave () {
     if (!this.isDirty) {
-      next()
-      return
+      return true
     }
     if (window.confirm('You have unsaved changes. Leave this file without saving?')) {
       this.setDirtyState(false)
-      next()
-      return
+      return true
     }
-    next(false)
+    return false
   },
   beforeUnmount () {
     this.$bus.$off('editorThemeChanged', this.onExternalThemeChange)

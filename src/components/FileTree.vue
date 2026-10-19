@@ -1,12 +1,17 @@
 <template>
-  <li class="filetree" @click.stop="toggle" @contextmenu.prevent.stop="openContextMenu">
+  <li
+    class="filetree"
+    :class="{ 'is-ignored-node': isIgnoredNode }"
+    @click.stop="toggle"
+    @contextmenu.prevent.stop="openContextMenu"
+  >
     <div v-if="isDirectory && !isRoot" class="filetree-expand" :class="{ expanded }">
       <q-icon name="chevron_right" size="16px" class="filetree-chevron" />
     </div>
     <span
       v-if="!isRoot"
       class="label"
-      :class="{ 'is-active': isActiveFile }"
+      :class="{ 'is-active': isActiveFile, 'is-ignored': isIgnoredNode }"
       tabindex="0"
       @keydown.stop="handleKeydown"
     >
@@ -154,6 +159,9 @@ export default {
       if (this.isDirectory) return false
       return this.activeFilePath === this.node?.path
     },
+    isIgnoredNode () {
+      return Boolean(this.node?.isIgnored)
+    },
     nameDialogValid () {
       const normalizedName = this.normalizeName(this.nameDialogModel)
       if (!this.isValidNodeName(normalizedName)) return false
@@ -294,6 +302,13 @@ export default {
       } catch (error) {
         return false
       }
+    },
+    async getIgnoredMap (paths) {
+      const studioFs = this.getStudioFs()
+      if (!studioFs || typeof studioFs.checkIgnored !== 'function') {
+        return {}
+      }
+      return studioFs.checkIgnored(paths)
     },
     async onNameDialogModelChange () {
       await this.validateNameDialog()
@@ -516,8 +531,12 @@ export default {
         const nodes = await Promise.all(files.map(async (file) => {
           const filePath = `${this.node.path}/${file}`
           const isDirectory = await this.getNodeIsDirectory({ path: filePath })
-          return { label: file, path: filePath, isDirectory }
+          return { label: file, path: filePath, isDirectory, isIgnored: false }
         }))
+        const ignoredMap = await this.getIgnoredMap(nodes.map((node) => node.path))
+        for (const node of nodes) {
+          node.isIgnored = Boolean(ignoredMap?.[node.path])
+        }
         this.children = nodes.sort(this.sortNodes)
       } catch (error) {
         this.children = []

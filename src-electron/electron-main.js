@@ -1,7 +1,9 @@
 import { app, BrowserWindow, dialog, ipcMain } from 'electron'
+import { execFile } from 'node:child_process'
 import { mkdir, readdir, readFile, rename, rm, stat, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import os from 'node:os'
+import { promisify } from 'node:util'
 import {
   registerQuasarRuntime,
   resolveElectronAssetsPath
@@ -10,6 +12,7 @@ import {
 // needed in case process is undefined under Linux
 const platform = process.platform || os.platform()
 const windowDirtyState = new Map()
+const execFileAsync = promisify(execFile)
 
 ipcMain.handle('studio:cwd', () => process.cwd())
 
@@ -34,6 +37,51 @@ ipcMain.handle('studio:stat', async (_event, targetPath) => {
 })
 
 ipcMain.handle('studio:readdir', (_event, targetPath) => readdir(targetPath))
+ipcMain.handle('studio:checkIgnored', async (_event, targetPaths = []) => {
+  if (!Array.isArray(targetPaths) || targetPaths.length === 0) {
+    return {}
+  }
+
+  const cwd = process.cwd()
+  const entries = targetPaths
+    .filter((targetPath) => typeof targetPath === 'string' && targetPath.length > 0)
+    .map((targetPath) => {
+      const absolutePath = path.resolve(targetPath)
+      const relativePath = path.relative(cwd, absolutePath)
+      return { absolutePath, relativePath }
+    })
+    .filter(({ relativePath }) => relativePath && !relativePath.startsWith('..'))
+
+  const ignoredByPath = Object.fromEntries(targetPaths.map((targetPath) => [targetPath, false]))
+  if (entries.length === 0) {
+    return ignoredByPath
+  }
+
+  try {
+    const { stdout } = await execFileAsync(
+      'git',
+      ['-C', cwd, 'check-ignore', '--', ...entries.map(({ relativePath }) => relativePath)]
+    )
+    const ignoredRelativePaths = new Set(
+      stdout
+        .split('\n')
+        .map((line) => line.trim())
+        .filter(Boolean)
+    )
+    for (const { absolutePath, relativePath } of entries) {
+      ignoredByPath[absolutePath] = ignoredRelativePaths.has(relativePath)
+    }
+    return ignoredByPath
+  } catch (error) {
+    if (error?.code === 1) {
+      return ignoredByPath
+    }
+    if (error?.code === 128 && String(error?.stderr || '').includes('not a git repository')) {
+      return ignoredByPath
+    }
+    throw error
+  }
+})
 
 ipcMain.handle('studio:readFile', (_event, targetPath) => readFile(targetPath, 'utf8'))
 
