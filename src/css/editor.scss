@@ -1,9 +1,29 @@
+.editor-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.editor-toolbar {
+  flex: 0 0 auto;
+}
+
+.editor-host {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
 .cm-editor {
-  min-height: 100vh !important;
+  height: 100%;
+  min-height: 0;
 }
 
 .cm-editor .cm-scroller {
   line-height: 1.2em;
   font-size: 1.1em;
   padding-top: 1em;
+  overflow: auto;
 }

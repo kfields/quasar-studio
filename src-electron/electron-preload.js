@@ -34,5 +34,6 @@ contextBridge.exposeInMainWorld('studioFs', {
   cwd: () => ipcRenderer.invoke('studio:cwd'),
   stat: (targetPath) => ipcRenderer.invoke('studio:stat', targetPath),
   readdir: (targetPath) => ipcRenderer.invoke('studio:readdir', targetPath),
-  readFile: (targetPath) => ipcRenderer.invoke('studio:readFile', targetPath)
+  readFile: (targetPath) => ipcRenderer.invoke('studio:readFile', targetPath),
+  writeFile: (targetPath, content) => ipcRenderer.invoke('studio:writeFile', targetPath, content)
 })

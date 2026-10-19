@@ -1,6 +1,6 @@
 <template>
-  <q-page>
-    <div class="q-pa-sm">
+  <q-page class="editor-page">
+    <div class="q-pa-sm editor-toolbar">
       <q-select
         v-model="selectedTheme"
         :options="themeOptions"
@@ -13,7 +13,7 @@
         @update:model-value="onThemeChange"
       />
     </div>
-    <div ref="editor"></div>
+    <div ref="editor" class="editor-host"></div>
     <div v-if="loadError" class="text-negative q-pa-sm">{{ loadError }}</div>
   </q-page>
 </template>
@@ -53,6 +53,10 @@ export default {
       content: '',
       cm: null,
       loadError: '',
+      lastSavedContent: '',
+      isDirty: false,
+      isSaving: false,
+      isApplyingContent: false,
       selectedTheme: 'auto',
       themeOptions: [
         { label: 'Auto (Quasar Dark Mode)', value: 'auto' },
@@ -80,14 +84,26 @@ export default {
     }
   },
   beforeRouteUpdate (to, from, next) {
+    if (this.isDirty) {
+      const shouldLeave = window.confirm('You have unsaved changes. Leave this file without saving?')
+      if (!shouldLeave) {
+        next(false)
+        return
+      }
+      this.setDirtyState(false)
+    }
     this.loadContent(to.params.id)
       .then((content) => {
         this.loadError = ''
         if (this.cm) {
+          this.isApplyingContent = true
+          this.lastSavedContent = content
           this.cm.dispatch({
             changes: { from: 0, to: this.cm.state.doc.length, insert: content },
             effects: languageCompartment.reconfigure(this.getLanguageExtension(to.params.id))
           })
+          this.isApplyingContent = false
+          this.setDirtyState(false)
         }
         next()
       })
@@ -96,7 +112,20 @@ export default {
         next()
       })
   },
+  beforeRouteLeave (to, from, next) {
+    if (!this.isDirty) {
+      next()
+      return
+    }
+    if (window.confirm('You have unsaved changes. Leave this file without saving?')) {
+      this.setDirtyState(false)
+      next()
+      return
+    }
+    next(false)
+  },
   beforeUnmount () {
+    this.emitDirtyState(false)
     if (this.cm) {
       this.cm.destroy()
     }
@@ -149,12 +178,41 @@ export default {
       if (!window.studioFs || !filePath) return ''
       return window.studioFs.readFile(this.decodeFilePath(filePath))
     },
+    getCurrentFileRoute () {
+      return `/edit/${encodeURIComponent(this.decodeFilePath(this.id))}`
+    },
+    emitDirtyState (isDirty) {
+      this.$bus.$emit('fileDirtyStateChanged', {
+        to: this.getCurrentFileRoute(),
+        isDirty
+      })
+    },
+    setDirtyState (isDirty) {
+      if (this.isDirty === isDirty) return
+      this.isDirty = isDirty
+      this.emitDirtyState(isDirty)
+    },
+    getSaveKeyBindings () {
+      return [{
+        key: 'Mod-s',
+        run: () => {
+          this.saveCurrentFile()
+          return true
+        }
+      }]
+    },
     getEditorExtensions (filePath) {
       return [
         basicSetup,
+        keymap.of(this.getSaveKeyBindings()),
         keymap.of(defaultKeymap),
         EditorView.lineWrapping,
         themeCompartment.of(this.getThemeExtension()),
+        EditorView.updateListener.of((update) => {
+          if (!update.docChanged || this.isApplyingContent) return
+          const current = update.state.doc.toString()
+          this.setDirtyState(current !== this.lastSavedContent)
+        }),
         languageCompartment.of(this.getLanguageExtension(filePath))
       ]
     },
@@ -168,10 +226,28 @@ export default {
         effects: themeCompartment.reconfigure(this.getThemeExtension())
       })
     },
+    async saveCurrentFile () {
+      if (!this.cm || !window.studioFs || this.isSaving) return
+      this.isSaving = true
+      try {
+        const currentFilePath = this.decodeFilePath(this.id)
+        const content = this.cm.state.doc.toString()
+        await window.studioFs.writeFile(currentFilePath, content)
+        this.lastSavedContent = content
+        this.setDirtyState(false)
+        this.loadError = ''
+      } catch (error) {
+        this.loadError = `Unable to save file: ${error?.message || String(error)}`
+      } finally {
+        this.isSaving = false
+      }
+    },
     async loadEditor () {
       try {
         const starter = await this.loadContent(this.id)
         this.loadError = ''
+        this.lastSavedContent = starter
+        this.setDirtyState(false)
         const state = EditorState.create({
           doc: starter,
           extensions: this.getEditorExtensions(this.id)
@@ -182,6 +258,8 @@ export default {
         })
       } catch (error) {
         this.loadError = `Unable to load file: ${error?.message || String(error)}`
+        this.lastSavedContent = ''
+        this.setDirtyState(false)
         const state = EditorState.create({
           doc: '',
           extensions: this.getEditorExtensions(this.id)

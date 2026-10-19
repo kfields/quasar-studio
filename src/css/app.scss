@@ -117,6 +117,19 @@ body.body--dark .channelbar {
   border-bottom: 1px solid #2e2e2e;
 }
 
+.tv-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.tv-page-container {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
 .channelbar-item {
   display: inline-flex;
   align-items: center;
@@ -136,6 +149,17 @@ body.body--dark .channelbar-item {
 
 .channelbar-item .tab-label {
   white-space: nowrap;
+}
+
+.tab-dirty-dot {
+  color: #b45309;
+  font-size: 0.7rem;
+  margin-right: 0.35rem;
+  vertical-align: middle;
+}
+
+body.body--dark .tab-dirty-dot {
+  color: #fbbf24;
 }
 
 .channelbar-item:hover {

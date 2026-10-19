@@ -1,5 +1,5 @@
 import { app, BrowserWindow, ipcMain } from 'electron'
-import { readdir, readFile, stat } from 'node:fs/promises'
+import { readdir, readFile, stat, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import os from 'node:os'
 import {
@@ -23,6 +23,8 @@ ipcMain.handle('studio:stat', async (_event, targetPath) => {
 ipcMain.handle('studio:readdir', (_event, targetPath) => readdir(targetPath))
 
 ipcMain.handle('studio:readFile', (_event, targetPath) => readFile(targetPath, 'utf8'))
+
+ipcMain.handle('studio:writeFile', (_event, targetPath, content) => writeFile(targetPath, content, 'utf8'))
 
 async function createWindow () {
   /**
