@@ -1,5 +1,18 @@
 <template>
   <q-page>
+    <div class="q-pa-sm">
+      <q-select
+        v-model="selectedTheme"
+        :options="themeOptions"
+        label="Editor Theme"
+        dense
+        outlined
+        emit-value
+        map-options
+        style="max-width: 220px"
+        @update:model-value="onThemeChange"
+      />
+    </div>
     <div ref="editor"></div>
     <div v-if="loadError" class="text-negative q-pa-sm">{{ loadError }}</div>
   </q-page>
@@ -10,6 +23,12 @@ import { Compartment, EditorState } from '@codemirror/state'
 import { EditorView, keymap } from '@codemirror/view'
 import { basicSetup } from 'codemirror'
 import { defaultKeymap } from '@codemirror/commands'
+import { oneDark } from '@codemirror/theme-one-dark'
+import { dracula } from '@uiw/codemirror-theme-dracula'
+import { githubDark } from '@uiw/codemirror-theme-github'
+import { monokai } from '@uiw/codemirror-theme-monokai'
+import { nord } from '@uiw/codemirror-theme-nord'
+import { solarizedDark } from '@uiw/codemirror-theme-solarized'
 import { css } from '@codemirror/lang-css'
 import { html } from '@codemirror/lang-html'
 import { javascript } from '@codemirror/lang-javascript'
@@ -19,35 +38,10 @@ import { python } from '@codemirror/lang-python'
 import { sql } from '@codemirror/lang-sql'
 import { yaml } from '@codemirror/lang-yaml'
 
-const darkEditorTheme = EditorView.theme({
-  '&': {
-    color: '#d4d4d4',
-    backgroundColor: '#1e1e1e',
-    minHeight: '100%'
-  },
-  '.cm-content': {
-    caretColor: '#ffffff'
-  },
-  '.cm-cursor, .cm-dropCursor': {
-    borderLeftColor: '#ffffff'
-  },
-  '.cm-selectionBackground, .cm-content ::selection': {
-    backgroundColor: '#264f78'
-  },
-  '.cm-gutters': {
-    backgroundColor: '#252526',
-    color: '#858585',
-    border: 'none'
-  },
-  '.cm-activeLine': {
-    backgroundColor: '#2a2d2e'
-  },
-  '.cm-activeLineGutter': {
-    backgroundColor: '#2a2d2e'
-  }
-}, { dark: true })
-
 const languageCompartment = new Compartment()
+const themeCompartment = new Compartment()
+const THEME_STORAGE_KEY = 'quasar-studio.editor-theme'
+const THEME_VALUES = ['one-dark', 'monokai', 'dracula', 'github-dark', 'nord', 'solarized-dark']
 
 export default {
   name: 'EditPage',
@@ -58,10 +52,23 @@ export default {
     return {
       content: '',
       cm: null,
-      loadError: ''
+      loadError: '',
+      selectedTheme: 'one-dark',
+      themeOptions: [
+        { label: 'One Dark', value: 'one-dark' },
+        { label: 'Monokai', value: 'monokai' },
+        { label: 'Dracula', value: 'dracula' },
+        { label: 'GitHub Dark', value: 'github-dark' },
+        { label: 'Nord', value: 'nord' },
+        { label: 'Solarized Dark', value: 'solarized-dark' }
+      ]
     }
   },
   async mounted () {
+    const savedTheme = window.localStorage.getItem(THEME_STORAGE_KEY)
+    if (THEME_VALUES.includes(savedTheme)) {
+      this.selectedTheme = savedTheme
+    }
     await this.loadEditor()
   },
   beforeRouteUpdate (to, from, next) {
@@ -119,6 +126,14 @@ export default {
       if (['yaml', 'yml'].includes(extension)) return yaml()
       return []
     },
+    getThemeExtension () {
+      if (this.selectedTheme === 'github-dark') return githubDark
+      if (this.selectedTheme === 'dracula') return dracula
+      if (this.selectedTheme === 'nord') return nord
+      if (this.selectedTheme === 'solarized-dark') return solarizedDark
+      if (this.selectedTheme === 'one-dark') return oneDark
+      return monokai
+    },
     async loadContent (filePath) {
       if (!window.studioFs || !filePath) return ''
       return window.studioFs.readFile(this.decodeFilePath(filePath))
@@ -128,9 +143,16 @@ export default {
         basicSetup,
         keymap.of(defaultKeymap),
         EditorView.lineWrapping,
-        darkEditorTheme,
+        themeCompartment.of(this.getThemeExtension()),
         languageCompartment.of(this.getLanguageExtension(filePath))
       ]
+    },
+    onThemeChange () {
+      window.localStorage.setItem(THEME_STORAGE_KEY, this.selectedTheme)
+      if (!this.cm) return
+      this.cm.dispatch({
+        effects: themeCompartment.reconfigure(this.getThemeExtension())
+      })
     },
     async loadEditor () {
       try {
