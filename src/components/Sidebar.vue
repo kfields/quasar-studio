@@ -31,7 +31,8 @@ export default {
     return {
       folder: { path: '', children: [] },
       loadError: '',
-      treeVersion: 0
+      treeVersion: 0,
+      refreshTreeListener: null
     }
   },
   async mounted () {
@@ -46,6 +47,15 @@ export default {
       this.folder.path = await window.studioFs.cwd()
     } catch (error) {
       this.loadError = `Unable to load project folder: ${error?.message || String(error)}`
+    }
+  },
+  created () {
+    this.refreshTreeListener = () => this.refreshTree()
+    this.$bus.$on('refreshTreeRequest', this.refreshTreeListener)
+  },
+  beforeUnmount () {
+    if (this.refreshTreeListener) {
+      this.$bus.$off('refreshTreeRequest', this.refreshTreeListener)
     }
   },
   methods: {

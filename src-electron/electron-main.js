@@ -1,5 +1,5 @@
 import { app, BrowserWindow, dialog, ipcMain } from 'electron'
-import { readdir, readFile, stat, writeFile } from 'node:fs/promises'
+import { mkdir, readdir, readFile, rename, rm, stat, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import os from 'node:os'
 import {
@@ -26,6 +26,9 @@ ipcMain.handle('studio:readdir', (_event, targetPath) => readdir(targetPath))
 ipcMain.handle('studio:readFile', (_event, targetPath) => readFile(targetPath, 'utf8'))
 
 ipcMain.handle('studio:writeFile', (_event, targetPath, content) => writeFile(targetPath, content, 'utf8'))
+ipcMain.handle('studio:mkdir', (_event, targetPath) => mkdir(targetPath))
+ipcMain.handle('studio:rename', (_event, oldPath, newPath) => rename(oldPath, newPath))
+ipcMain.handle('studio:remove', (_event, targetPath, isDirectory) => rm(targetPath, { recursive: isDirectory, force: false }))
 ipcMain.on('studio:setWindowDirty', (event, isDirty) => {
   windowDirtyState.set(event.sender.id, Boolean(isDirty))
 })

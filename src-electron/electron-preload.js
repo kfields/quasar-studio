@@ -35,7 +35,10 @@ contextBridge.exposeInMainWorld('studioFs', {
   stat: (targetPath) => ipcRenderer.invoke('studio:stat', targetPath),
   readdir: (targetPath) => ipcRenderer.invoke('studio:readdir', targetPath),
   readFile: (targetPath) => ipcRenderer.invoke('studio:readFile', targetPath),
-  writeFile: (targetPath, content) => ipcRenderer.invoke('studio:writeFile', targetPath, content)
+  writeFile: (targetPath, content) => ipcRenderer.invoke('studio:writeFile', targetPath, content),
+  mkdir: (targetPath) => ipcRenderer.invoke('studio:mkdir', targetPath),
+  rename: (oldPath, newPath) => ipcRenderer.invoke('studio:rename', oldPath, newPath),
+  remove: (targetPath, isDirectory) => ipcRenderer.invoke('studio:remove', targetPath, isDirectory)
 })
 
 contextBridge.exposeInMainWorld('studioWindow', {
