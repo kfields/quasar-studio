@@ -1,8 +1,7 @@
 <template>
   <li class="filetree" @click.stop="toggle" @contextmenu.prevent.stop="openContextMenu">
-    <div v-if="isDirectory && !isRoot" class="filetree-expand">
-      <q-icon v-if="expanded" name="fas fa-caret-up" size=".75em"/>
-      <q-icon v-else name="fas fa-caret-right" size=".75em"/>
+    <div v-if="isDirectory && !isRoot" class="filetree-expand" :class="{ expanded }">
+      <q-icon name="chevron_right" size="16px" class="filetree-chevron" />
     </div>
     <span
       v-if="!isRoot"
@@ -11,7 +10,12 @@
       tabindex="0"
       @keydown.stop="handleKeydown"
     >
-      <q-icon :name="nodeIcon" size="14px" :class="['filetree-node-icon', nodeIconClass]" />
+      <q-icon
+        v-if="nodeIcon"
+        :name="nodeIcon"
+        size="14px"
+        :class="['filetree-node-icon', nodeIconClass]"
+      />
       <span class="label-text">{{ node.label }}</span>
     </span>
     <q-menu
@@ -167,9 +171,7 @@ export default {
       return ''
     },
     nodeIcon () {
-      if (this.isDirectory) {
-        return this.expanded ? 'folder_open' : 'folder'
-      }
+      if (this.isDirectory) return ''
       const normalizedName = this.getNormalizedFileName(this.node?.label)
       const normalizedPath = this.getNormalizedNodePath(this.node?.path)
       if (normalizedName === 'package.json') return 'inventory'
@@ -199,7 +201,7 @@ export default {
     },
     nodeIconClass () {
       if (this.isDirectory) {
-        return 'filetree-node-icon--folder'
+        return ''
       }
       const normalizedName = this.getNormalizedFileName(this.node?.label)
       const normalizedPath = this.getNormalizedNodePath(this.node?.path)

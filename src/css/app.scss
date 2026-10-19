@@ -53,11 +53,12 @@ body.body--dark .sidebar-content {
   list-style: none;
   cursor: pointer;
   border-radius: 4px;
+  line-height: 1.25;
 }
 
 .filetree ul {
   padding: 0;
-  margin-left: 16px;
+  margin-left: 14px;
 }
 
 .filetree > .label,
@@ -74,8 +75,15 @@ body.body--dark .filetree > .filetree-expand {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  padding: 2px 6px;
+  min-height: 22px;
+  padding: 2px 6px 2px 2px;
   border-radius: 4px;
+  vertical-align: middle;
+}
+
+.filetree > .label .label-text {
+  display: inline-block;
+  vertical-align: middle;
 }
 
 .filetree > .label:focus-visible {
@@ -239,8 +247,30 @@ body.body--dark .filetree-node-icon--default {
 }
 
 .filetree-expand {
-  display: inline-block;
-  padding-right: 0.5em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  margin-right: 2px;
+  border-radius: 3px;
+  vertical-align: middle;
+}
+
+.filetree-chevron {
+  transition: transform 0.12s ease-out;
+}
+
+.filetree-expand.expanded .filetree-chevron {
+  transform: rotate(90deg);
+}
+
+.filetree:hover > .filetree-expand {
+  background-color: #ebebeb;
+}
+
+body.body--dark .filetree:hover > .filetree-expand {
+  background-color: #2a2a2a;
 }
 
 .channelbar {
