@@ -1,18 +1,5 @@
 <template>
   <q-page class="editor-page">
-    <div class="q-pa-sm editor-toolbar">
-      <q-select
-        v-model="selectedTheme"
-        :options="themeOptions"
-        label="Editor Theme"
-        dense
-        outlined
-        emit-value
-        map-options
-        style="max-width: 220px"
-        @update:model-value="onThemeChange"
-      />
-    </div>
     <div ref="editor" class="editor-host"></div>
     <div v-if="loadError" class="text-negative q-pa-sm">{{ loadError }}</div>
   </q-page>
@@ -57,17 +44,11 @@ export default {
       isDirty: false,
       isSaving: false,
       isApplyingContent: false,
-      selectedTheme: 'auto',
-      themeOptions: [
-        { label: 'Auto (Quasar Dark Mode)', value: 'auto' },
-        { label: 'One Dark', value: 'one-dark' },
-        { label: 'Monokai', value: 'monokai' },
-        { label: 'Dracula', value: 'dracula' },
-        { label: 'GitHub Dark', value: 'github-dark' },
-        { label: 'Nord', value: 'nord' },
-        { label: 'Solarized Dark', value: 'solarized-dark' }
-      ]
+      selectedTheme: 'auto'
     }
+  },
+  created () {
+    this.$bus.$on('editorThemeChanged', this.onExternalThemeChange)
   },
   async mounted () {
     const savedTheme = window.localStorage.getItem(THEME_STORAGE_KEY)
@@ -125,6 +106,7 @@ export default {
     next(false)
   },
   beforeUnmount () {
+    this.$bus.$off('editorThemeChanged', this.onExternalThemeChange)
     this.emitDirtyState(false)
     if (this.cm) {
       this.cm.destroy()
@@ -216,8 +198,9 @@ export default {
         languageCompartment.of(this.getLanguageExtension(filePath))
       ]
     },
-    onThemeChange () {
-      window.localStorage.setItem(THEME_STORAGE_KEY, this.selectedTheme)
+    onExternalThemeChange (theme) {
+      if (!THEME_VALUES.includes(theme)) return
+      this.selectedTheme = theme
       this.applyTheme()
     },
     applyTheme () {
