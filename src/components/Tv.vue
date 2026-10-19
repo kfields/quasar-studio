@@ -1,10 +1,10 @@
 <template>
-  <div class="tv-shell">
-    <ul class="channelbar shadow-2">
+  <div class="tv-shell" :style="tvShellStyle">
+    <ul class="channelbar">
       <li
         v-for="(item, index) in items"
         :key="item.to"
-        class="channelbar-item shadow-1"
+        class="channelbar-item"
         :class="{ 'router-link-exact-active': isActive(item) }"
         draggable="true"
         @click="openTab(item.to)"
@@ -37,18 +37,31 @@ export default {
       items: [
         { label: 'Welcome', to: '/', dirty: false }
       ],
-      dragIndex: null
+      dragIndex: null,
+      editorSurfaceColor: ''
     }
   },
   created () {
     this.$bus.$on('openFile', this.openFile)
     this.$bus.$on('fileDirtyStateChanged', this.onFileDirtyStateChanged)
+    this.$bus.$on('editorSurfaceColorChanged', this.onEditorSurfaceColorChanged)
   },
   beforeUnmount () {
     this.$bus.$off('openFile', this.openFile)
     this.$bus.$off('fileDirtyStateChanged', this.onFileDirtyStateChanged)
+    this.$bus.$off('editorSurfaceColorChanged', this.onEditorSurfaceColorChanged)
   },
   mounted () {
+  },
+  computed: {
+    tvShellStyle () {
+      if (!this.$route.path.startsWith('/edit/') || !this.editorSurfaceColor) {
+        return {}
+      }
+      return {
+        '--editor-surface': this.editorSurfaceColor
+      }
+    }
   },
   methods: {
     isActive (item) {
@@ -70,6 +83,9 @@ export default {
       const tab = this.items.find((item) => item.to === to)
       if (!tab) return
       tab.dirty = isDirty
+    },
+    onEditorSurfaceColorChanged (color) {
+      this.editorSurfaceColor = typeof color === 'string' ? color : ''
     },
     closeFile (index) {
       const closed = this.items[index]

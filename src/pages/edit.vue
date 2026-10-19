@@ -104,6 +104,7 @@ export default {
   beforeUnmount () {
     this.$bus.$off('editorThemeChanged', this.onExternalThemeChange)
     this.emitDirtyState(false)
+    this.$bus.$emit('editorSurfaceColorChanged', '')
     if (this.cm) {
       this.cm.destroy()
     }
@@ -209,6 +210,15 @@ export default {
       this.cm.dispatch({
         effects: themeCompartment.reconfigure(this.getThemeExtension())
       })
+      this.syncEditorSurfaceColor()
+    },
+    syncEditorSurfaceColor () {
+      if (!this.cm) return
+      requestAnimationFrame(() => {
+        if (!this.cm) return
+        const backgroundColor = window.getComputedStyle(this.cm.dom).backgroundColor || ''
+        this.$bus.$emit('editorSurfaceColorChanged', backgroundColor)
+      })
     },
     async saveCurrentFile () {
       if (!this.cm || !window.studioFs || this.isSaving) return
@@ -240,9 +250,10 @@ export default {
           state,
           parent: this.$refs.editor
         })
-      } catch (error) {
-        this.loadError = `Unable to load file: ${error?.message || String(error)}`
-        this.lastSavedContent = ''
+          this.syncEditorSurfaceColor()
+        } catch (error) {
+          this.loadError = `Unable to load file: ${error?.message || String(error)}`
+          this.lastSavedContent = ''
         this.setDirtyState(false)
         const state = EditorState.create({
           doc: '',
@@ -252,6 +263,7 @@ export default {
           state,
           parent: this.$refs.editor
         })
+        this.syncEditorSurfaceColor()
       }
     }
   }
