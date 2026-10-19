@@ -1,16 +1,15 @@
 <template>
   <q-page>
-    <textarea ref="editor"></textarea>
+    <div ref="editor"></div>
+    <div v-if="loadError" class="text-negative q-pa-sm">{{ loadError }}</div>
   </q-page>
 </template>
 
 <script>
-import fs from 'fs'
-import CodeMirror from 'codemirror'
-// import 'codemirror/lib/codemirror.css'
-// import 'codemirror/theme/monokai.css'
-// import 'codemirror/mode/javascript/javascript.js'
-import 'codemirror/mode/coffeescript/coffeescript.js'
+import { EditorState } from '@codemirror/state'
+import { EditorView, keymap } from '@codemirror/view'
+import { basicSetup } from 'codemirror'
+import { defaultKeymap } from '@codemirror/commands'
 
 export default {
   name: 'EditPage',
@@ -19,27 +18,79 @@ export default {
   ],
   data () {
     return {
-      content: ''
+      content: '',
+      cm: null,
+      loadError: ''
     }
   },
-  mounted () {
-    const cm = this.cm = CodeMirror.fromTextArea(this.$refs.editor, {
-      theme: 'miakai',
-      mode: 'coffeescript',
-      lineNumbers: true,
-      styleActiveLine: true,
-      matchBrackets: true,
-      tabSize: 2
-    })
-    const content = fs.readFileSync(this.id, 'utf8')
-    cm.setValue(content)
+  async mounted () {
+    await this.loadEditor()
   },
   beforeRouteUpdate (to, from, next) {
-    const content = fs.readFileSync(to.params.id, 'utf8')
-    this.cm.setValue(content)
-    next()
+    this.loadContent(to.params.id)
+      .then((content) => {
+        this.loadError = ''
+        if (this.cm) {
+          this.cm.dispatch({
+            changes: { from: 0, to: this.cm.state.doc.length, insert: content }
+          })
+        }
+        next()
+      })
+      .catch((error) => {
+        this.loadError = `Unable to load file: ${error?.message || String(error)}`
+        next()
+      })
+  },
+  beforeUnmount () {
+    if (this.cm) {
+      this.cm.destroy()
+    }
   },
   methods: {
+    decodeFilePath (filePath) {
+      try {
+        return decodeURIComponent(filePath)
+      } catch (error) {
+        return filePath
+      }
+    },
+    async loadContent (filePath) {
+      if (!window.studioFs || !filePath) return ''
+      return window.studioFs.readFile(this.decodeFilePath(filePath))
+    },
+    async loadEditor () {
+      try {
+        const starter = await this.loadContent(this.id)
+        this.loadError = ''
+        const state = EditorState.create({
+          doc: starter,
+          extensions: [
+            basicSetup,
+            keymap.of(defaultKeymap),
+            EditorView.lineWrapping
+          ]
+        })
+        this.cm = new EditorView({
+          state,
+          parent: this.$refs.editor
+        })
+      } catch (error) {
+        this.loadError = `Unable to load file: ${error?.message || String(error)}`
+        const state = EditorState.create({
+          doc: '',
+          extensions: [
+            basicSetup,
+            keymap.of(defaultKeymap),
+            EditorView.lineWrapping
+          ]
+        })
+        this.cm = new EditorView({
+          state,
+          parent: this.$refs.editor
+        })
+      }
+    }
   }
 }
 </script>

@@ -1,4 +1,5 @@
-import { app, BrowserWindow } from 'electron'
+import { app, BrowserWindow, ipcMain } from 'electron'
+import { readdir, readFile, stat } from 'node:fs/promises'
 import path from 'node:path'
 import os from 'node:os'
 import {
@@ -8,6 +9,20 @@ import {
 
 // needed in case process is undefined under Linux
 const platform = process.platform || os.platform()
+
+ipcMain.handle('studio:cwd', () => process.cwd())
+
+ipcMain.handle('studio:stat', async (_event, targetPath) => {
+  const stats = await stat(targetPath)
+  return {
+    isDirectory: stats.isDirectory(),
+    isFile: stats.isFile()
+  }
+})
+
+ipcMain.handle('studio:readdir', (_event, targetPath) => readdir(targetPath))
+
+ipcMain.handle('studio:readFile', (_event, targetPath) => readFile(targetPath, 'utf8'))
 
 async function createWindow () {
   /**

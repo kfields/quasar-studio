@@ -4,56 +4,79 @@
       <q-icon v-if="expanded" name="fas fa-caret-up" size=".75em"/>
       <q-icon v-else name="fas fa-caret-right" size=".75em"/>
     </div>
-    <span v-if="!isRoot" class="label" @dblclick.stop="openFile">{{ node.label }}</span>
-    <ul v-if="expanded && node.children && node.children.length">
-      <FileTree v-for="(child, index) in node.children" :node="child" :key="index"/>
+    <span v-if="!isRoot" class="label">{{ node.label }}</span>
+    <ul v-if="expanded && children.length">
+      <FileTree v-for="(child, index) in children" :node="child" :key="index"/>
     </ul>
+    <div v-if="readError && isRoot" class="text-negative q-pa-sm">{{ readError }}</div>
   </li>
 </template>
 
 <script>
-import fs from 'fs'
-// import path from 'path'
-
 export default {
   name: 'FileTree',
   props: {
-    node: { children: [] },
-    opened: false,
-    isRoot: false
+    node: { type: Object, default: () => ({ path: '/', children: [] }) },
+    opened: { type: Boolean, default: false },
+    isRoot: { type: Boolean, default: false }
   },
   data () {
     return {
       isDirectory: false,
-      expanded: false
+      expanded: false,
+      children: [],
+      readError: ''
     }
   },
-  mounted: function () {
+  async mounted () {
     this.expanded = this.opened
-    const dir = this.node.path
-    this.isDirectory = fs.statSync(dir).isDirectory()
+    this.isDirectory = await this.getNodeIsDirectory(this.node)
     if (this.expanded && this.isDirectory) {
-      this.readDir()
+      await this.readDir()
     }
   },
   methods: {
-    openFile (event) {
+    getStudioFs () {
+      return window.studioFs || null
+    },
+    async getNodeIsDirectory (node) {
+      const studioFs = this.getStudioFs()
+      if (!studioFs || !node || !node.path) return false
+      try {
+        const stats = await studioFs.stat(node.path)
+        return !!stats.isDirectory
+      } catch (error) {
+        return false
+      }
+    },
+    openFile () {
       if (this.isDirectory) return
+      if (!this.node || !this.node.path) return
       this.$bus.$emit('openFile', this.node.path)
     },
-    toggle (event) {
-      if (!this.isDirectory) return
+    async toggle () {
+      if (!this.isDirectory) {
+        this.openFile()
+        return
+      }
       this.expanded = !this.expanded
-      this.readDir()
+      await this.readDir()
     },
-    readDir () {
-      this.node.children = []
-      const dir = this.node.path
-      let files = fs.readdirSync(dir)
-      for (let file of files) {
-        const filePath = `${dir}/${file}`
-        const child = {label: file, path: filePath}
-        this.node.children.push(child)
+    async readDir () {
+      const studioFs = this.getStudioFs()
+      if (!studioFs || !this.node || !this.node.path) return
+      this.children = []
+      this.readError = ''
+
+      try {
+        const files = await studioFs.readdir(this.node.path)
+        for (const file of files) {
+          const filePath = `${this.node.path}/${file}`
+          this.children.push({ label: file, path: filePath })
+        }
+      } catch (error) {
+        this.children = []
+        this.readError = `Unable to read directory "${this.node.path}": ${error?.message || String(error)}`
       }
     }
   }

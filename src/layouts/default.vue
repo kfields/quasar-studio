@@ -32,6 +32,7 @@ export default {
     Tv
   },
   data () {
+    return {}
   },
   mounted () {
   },

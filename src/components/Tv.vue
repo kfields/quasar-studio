@@ -15,8 +15,6 @@
 </template>
 
 <script>
-import path from 'path'
-
 export default {
   name: 'Tv',
   components: {
@@ -31,13 +29,16 @@ export default {
   created () {
     this.$bus.$on('openFile', this.openFile)
   },
+  beforeUnmount () {
+    this.$bus.$off('openFile', this.openFile)
+  },
   mounted () {
   },
   methods: {
     openFile (filePath) {
-      const label = path.basename(filePath)
+      const label = filePath.split(/[\\/]/).pop() || filePath
       const to = `/edit/${encodeURIComponent(filePath)}`
-      this.items.push({ label: label, to: to })
+      this.items.push({ label, to })
       this.$router.push(to)
     },
     closeFile (index) {

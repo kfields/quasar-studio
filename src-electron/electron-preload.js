@@ -22,10 +22,17 @@
  * https://www.electronjs.org/docs/latest/tutorial/tutorial-preload
  */
 
-import { contextBridge } from 'electron'
+import { contextBridge, ipcRenderer } from 'electron'
 import { quasarRuntime } from '#q-app/electron/preload'
 
 /**
  * Can be used in the renderer process through `window.quasarRuntime`
  */
 contextBridge.exposeInMainWorld("quasarRuntime", quasarRuntime)
+
+contextBridge.exposeInMainWorld('studioFs', {
+  cwd: () => ipcRenderer.invoke('studio:cwd'),
+  stat: (targetPath) => ipcRenderer.invoke('studio:stat', targetPath),
+  readdir: (targetPath) => ipcRenderer.invoke('studio:readdir', targetPath),
+  readFile: (targetPath) => ipcRenderer.invoke('studio:readFile', targetPath)
+})
