@@ -103,37 +103,69 @@ body.body--dark .filetree > .label.is-active {
 .channelbar {
   list-style: none;
   color: inherit;
-  margin: 0 auto;
-  padding: 0;
+  margin: 0;
+  padding: 6px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  background-color: #f6f6f6;
+  border-bottom: 1px solid #dddddd;
+}
+
+body.body--dark .channelbar {
+  background-color: #1b1b1b;
+  border-bottom: 1px solid #2e2e2e;
 }
 
 .channelbar-item {
-  display: inline-block;
-  padding: 0.5em;
+  display: inline-flex;
+  align-items: center;
+  padding: 0.45em 0.65em;
   cursor: pointer;
   border-radius: 4px;
-  transition: background-color 0.15s ease-in-out;
+  border: 1px solid #d8d8d8;
+  background-color: #fcfcfc;
+  transition: background-color 0.15s ease-in-out, border-color 0.15s ease-in-out;
+  user-select: none;
+}
+
+body.body--dark .channelbar-item {
+  border-color: #3a3a3a;
+  background-color: #232323;
+}
+
+.channelbar-item .tab-label {
+  white-space: nowrap;
 }
 
 .channelbar-item:hover {
-  background-color: #e6e6e6;
+  background-color: #ececec;
+  border-color: #cfcfcf;
 }
 
 body.body--dark .channelbar-item:hover {
-  background-color: #262626;
+  background-color: #2d2d2d;
+  border-color: #4b4b4b;
 }
 
 .channelbar-item-close {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   visibility: hidden;
+  margin-left: 0.35rem;
 }
 
 .channelbar-item.router-link-exact-active {
-  background-color: #ececec;
+  background-color: #dfefff;
+  border-color: #b9d5f1;
+  color: #0b3b78;
 }
 
 body.body--dark .channelbar-item.router-link-exact-active {
-  background-color: #111111;
+  background-color: #1f3b63;
+  border-color: #3b5a8a;
+  color: #d8e8ff;
 }
 
 .router-link-exact-active .channelbar-item-close,
