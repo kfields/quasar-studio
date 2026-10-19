@@ -4,6 +4,7 @@
       <q-btn flat icon="far fa-copy" to="/"/>
       <q-btn flat icon="fas fa-share-alt" to="/graph"/>
       <q-btn flat icon="settings" to="/settings"/>
+      <q-btn flat icon="refresh" @click="refreshTree"/>
       <q-btn
         flat
         :icon="$q.dark.isActive ? 'light_mode' : 'dark_mode'"
@@ -13,7 +14,7 @@
     <div class="sidebar-content">
       <div v-if="loadError" class="text-negative q-pa-sm">{{ loadError }}</div>
       <ul v-else-if="folder && folder.path" class="q-pa-none q-ma-none">
-        <FileTree :node="folder" :opened="true" :isRoot="true"/>
+        <FileTree :key="treeVersion" :node="folder" :opened="true" :isRoot="true"/>
       </ul>
     </div>
   </div>
@@ -29,7 +30,8 @@ export default {
   data () {
     return {
       folder: { path: '', children: [] },
-      loadError: ''
+      loadError: '',
+      treeVersion: 0
     }
   },
   async mounted () {
@@ -47,6 +49,9 @@ export default {
     }
   },
   methods: {
+    refreshTree () {
+      this.treeVersion += 1
+    }
   }
 }
 </script>
