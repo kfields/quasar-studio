@@ -19,6 +19,7 @@
 .cm-editor {
   height: 100%;
   min-height: 0;
+  position: relative;
 }
 
 .cm-editor .cm-scroller {
@@ -26,4 +27,12 @@
   font-size: 1.1em;
   padding-top: 1em;
   overflow: auto;
+}
+
+.cm-editor .cm-panels {
+  z-index: 3;
+}
+
+.cm-editor .cm-panels.cm-panels-top {
+  top: 6px;
 }

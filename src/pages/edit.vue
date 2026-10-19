@@ -10,6 +10,7 @@ import { Compartment, EditorState } from '@codemirror/state'
 import { EditorView, keymap } from '@codemirror/view'
 import { basicSetup } from 'codemirror'
 import { defaultKeymap } from '@codemirror/commands'
+import { search, searchKeymap } from '@codemirror/search'
 import { oneDark } from '@codemirror/theme-one-dark'
 import { dracula } from '@uiw/codemirror-theme-dracula'
 import { githubDark, githubLight } from '@uiw/codemirror-theme-github'
@@ -185,6 +186,8 @@ export default {
       return [
         basicSetup,
         keymap.of(this.getSaveKeyBindings()),
+        search({ top: true }),
+        keymap.of(searchKeymap),
         keymap.of(defaultKeymap),
         EditorView.lineWrapping,
         themeCompartment.of(this.getThemeExtension()),
