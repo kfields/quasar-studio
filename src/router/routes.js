@@ -2,16 +2,19 @@
 export default [
   {
     path: '/',
-    component: () => import('layouts/default'),
+    component: () => import('@/layouts/default.vue'),
     children: [
-      { path: '', component: () => import('pages/index') },
-      { path: 'graph', component: () => import('pages/graph') },
-      { path: 'edit/:id', component: () => import('pages/edit'), props: true }
+      { path: '', component: () => import('@/pages/index.vue') },
+      { path: 'graph', component: () => import('@/pages/graph.vue') },
+      { path: 'edit/:id', component: () => import('@/pages/edit.vue'), props: true }
     ]
   },
 
-  { // Always leave this as last one
-    path: '*',
-    component: () => import('pages/404')
+  // Always leave this as last one,
+  // but you can also remove it
+  {
+    path: '/:catchAll(.*)*',
+    component: () => import('@/pages/404.vue')
   }
+
 ]

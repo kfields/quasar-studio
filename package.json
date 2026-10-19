@@ -1,45 +1,44 @@
 {
-  "name": "quasar-studio",
-  "version": "1.0.0",
-  "description": "Quasar Studio",
-  "productName": "Quasar Studio",
-  "cordovaId": "org.cordova.quasar.app",
-  "author": "Kurtis Fields <kurtisfields@gmail.com>",
+  "name": "quasar-project",
+  "version": "0.0.1",
   "private": true,
+  "description": "A Quasar Project",
+  "keywords": [
+    "quasar",
+    "quasar-app",
+    "quasar-app-vite",
+    "quasar-cli",
+    "vite",
+    "vue",
+    "vuejs"
+  ],
+  "author": "kfields <kurtisfields@gmail.com>",
+  "type": "module",
   "scripts": {
-    "lint": "eslint --ext .js,.vue src",
-    "test": "echo \"No test specified\" && exit 0"
+    "lint": "oxfmt && oxlint --fix",
+    "lint:check": "oxfmt --check && oxlint",
+    "dev": "quasar dev",
+    "build": "quasar build",
+    "postinstall": "quasar prepare --silent"
   },
   "dependencies": {
-    "axios": "^0.18.0",
-    "codemirror": "^5.43.0",
-    "split.js": "^1.5.10"
+    "@quasar/extras": "^2.1.0",
+    "codemirror": "^6.0.2",
+    "electron": "^44.9.0",
+    "quasar": "^2.35.1",
+    "vue": "^3.5.22",
+    "vue-router": "^5.0.6"
   },
   "devDependencies": {
-    "babel-eslint": "^8.2.6",
-    "devtron": "^1.4.0",
-    "electron": "^2.0.17",
-    "electron-debug": "^1.5.0",
-    "electron-devtools-installer": "^2.2.4",
-    "eslint": "^4.18.2",
-    "eslint-config-standard": "^11.0.0",
-    "eslint-friendly-formatter": "^4.0.1",
-    "eslint-loader": "^2.1.2",
-    "eslint-plugin-import": "^2.16.0",
-    "eslint-plugin-node": "^6.0.1",
-    "eslint-plugin-promise": "^3.7.0",
-    "eslint-plugin-standard": "^3.0.1",
-    "eslint-plugin-vue": "^4.7.1",
-    "quasar-cli": "^0.16.0"
+    "@quasar/app-vite": "^3.10.3",
+    "autoprefixer": "^10.4.27",
+    "oxfmt": "^0.x",
+    "oxlint": "^1.x",
+    "postcss": "^8.5.8",
+    "stylus": "^0.59.0"
   },
   "engines": {
-    "node": ">= 8.9.0",
-    "npm": ">= 5.6.0",
-    "yarn": ">= 1.6.0"
+    "node": ">= 26 || ^24 || ^22.12"
   },
-  "browserslist": [
-    "> 1%",
-    "last 2 versions",
-    "not ie <= 10"
-  ]
+  "productName": "Quasar App"
 }

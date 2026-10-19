@@ -7,7 +7,7 @@
 <script>
 import fs from 'fs'
 import CodeMirror from 'codemirror'
-import 'codemirror/lib/codemirror.css'
+// import 'codemirror/lib/codemirror.css'
 // import 'codemirror/theme/monokai.css'
 // import 'codemirror/mode/javascript/javascript.js'
 import 'codemirror/mode/coffeescript/coffeescript.js'

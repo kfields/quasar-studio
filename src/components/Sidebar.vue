@@ -5,13 +5,13 @@
       <q-btn flat icon="fas fa-share-alt" to="/graph"/>
     </div>
     <div style="white-space: nowrap; overflow: hidden; min-height: 100vh !important; background-color: #111111;">
-      <FileTree :node="this.folder" :opened="true" :isRoot="true"/>
+      <FileTree :node="folder" :opened="true" :isRoot="true"/>
     </div>
   </div>
 </template>
 
 <script>
-import FileTree from 'components/FileTree'
+import FileTree from '@/components/FileTree.vue'
 import process from 'process'
 export default {
   name: 'Sidebar',
