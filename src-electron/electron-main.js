@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain } from 'electron'
+import { app, BrowserWindow, dialog, ipcMain } from 'electron'
 import { readdir, readFile, stat, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import os from 'node:os'
@@ -9,6 +9,7 @@ import {
 
 // needed in case process is undefined under Linux
 const platform = process.platform || os.platform()
+const windowDirtyState = new Map()
 
 ipcMain.handle('studio:cwd', () => process.cwd())
 
@@ -25,6 +26,9 @@ ipcMain.handle('studio:readdir', (_event, targetPath) => readdir(targetPath))
 ipcMain.handle('studio:readFile', (_event, targetPath) => readFile(targetPath, 'utf8'))
 
 ipcMain.handle('studio:writeFile', (_event, targetPath, content) => writeFile(targetPath, content, 'utf8'))
+ipcMain.on('studio:setWindowDirty', (event, isDirty) => {
+  windowDirtyState.set(event.sender.id, Boolean(isDirty))
+})
 
 async function createWindow () {
   /**
@@ -41,6 +45,7 @@ async function createWindow () {
       preload: path.join(import.meta.dirname, 'electron-preload.cjs')
     }
   })
+  const webContentsId = mainWindow.webContents.id
 
   if (import.meta.env.QUASAR_DEV) {
     await mainWindow.loadURL(import.meta.env.QUASAR_APP_URL)
@@ -57,6 +62,26 @@ async function createWindow () {
       mainWindow.webContents.closeDevTools()
     })
   }
+
+  mainWindow.on('close', (event) => {
+    if (!windowDirtyState.get(webContentsId)) return
+    const choice = dialog.showMessageBoxSync(mainWindow, {
+      type: 'warning',
+      title: 'Unsaved changes',
+      message: 'You have unsaved changes.',
+      detail: 'Close the window and discard unsaved changes?',
+      buttons: ['Cancel', 'Discard Changes'],
+      defaultId: 0,
+      cancelId: 0
+    })
+    if (choice === 0) {
+      event.preventDefault()
+    }
+  })
+
+  mainWindow.on('closed', () => {
+    windowDirtyState.delete(webContentsId)
+  })
 }
 
 void app.whenReady().then(() => {

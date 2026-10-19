@@ -173,6 +173,9 @@ export default {
       if (this.isDirty === isDirty) return
       this.isDirty = isDirty
       this.emitDirtyState(isDirty)
+      if (window.studioWindow) {
+        window.studioWindow.setDirty(isDirty)
+      }
     },
     getSaveKeyBindings () {
       return [{

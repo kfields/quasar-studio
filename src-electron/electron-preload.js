@@ -37,3 +37,7 @@ contextBridge.exposeInMainWorld('studioFs', {
   readFile: (targetPath) => ipcRenderer.invoke('studio:readFile', targetPath),
   writeFile: (targetPath, content) => ipcRenderer.invoke('studio:writeFile', targetPath, content)
 })
+
+contextBridge.exposeInMainWorld('studioWindow', {
+  setDirty: (isDirty) => ipcRenderer.send('studio:setWindowDirty', isDirty)
+})
