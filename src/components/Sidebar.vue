@@ -14,7 +14,7 @@
     <div class="sidebar-content">
       <div v-if="loadError" class="text-negative q-pa-sm">{{ loadError }}</div>
       <ul v-else-if="folder && folder.path" class="q-pa-none q-ma-none">
-        <FileTree :key="treeVersion" :node="folder" :opened="true" :isRoot="true"/>
+        <FileTree :node="folder" :opened="true" :isRoot="true"/>
       </ul>
     </div>
   </div>
@@ -30,9 +30,7 @@ export default {
   data () {
     return {
       folder: { path: '', children: [] },
-      loadError: '',
-      treeVersion: 0,
-      refreshTreeListener: null
+      loadError: ''
     }
   },
   async mounted () {
@@ -49,18 +47,9 @@ export default {
       this.loadError = `Unable to load project folder: ${error?.message || String(error)}`
     }
   },
-  created () {
-    this.refreshTreeListener = () => this.refreshTree()
-    this.$bus.$on('refreshTreeRequest', this.refreshTreeListener)
-  },
-  beforeUnmount () {
-    if (this.refreshTreeListener) {
-      this.$bus.$off('refreshTreeRequest', this.refreshTreeListener)
-    }
-  },
   methods: {
     refreshTree () {
-      this.treeVersion += 1
+      this.$bus.$emit('refreshTreeRequest')
     }
   }
 }

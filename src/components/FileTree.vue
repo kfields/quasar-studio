@@ -40,8 +40,9 @@
             autofocus
             dense
             outlined
-            :error="Boolean(nameDialogModel) && !nameDialogValid"
+            :error="Boolean(nameDialogModel) && Boolean(nameDialogErrorMessage)"
             :error-message="nameDialogErrorMessage"
+            @update:model-value="onNameDialogModelChange"
             @keyup.enter="confirmNameDialog"
           />
         </q-card-section>
@@ -87,10 +88,15 @@ export default {
       nameDialogTitle: '',
       nameDialogModel: '',
       nameDialogResolver: null,
+      nameDialogParentDir: '',
+      nameDialogCurrentPath: '',
+      nameDialogDuplicateExists: false,
+      nameDialogValidationToken: 0,
       confirmDialogOpen: false,
       confirmDialogTitle: '',
       confirmDialogMessage: '',
-      confirmDialogResolver: null
+      confirmDialogResolver: null,
+      refreshTreeListener: null
     }
   },
   async mounted () {
@@ -98,6 +104,27 @@ export default {
     this.isDirectory = await this.getNodeIsDirectory(this.node)
     if (this.expanded && this.isDirectory) {
       await this.readDir()
+    }
+  },
+  created () {
+    this.refreshTreeListener = (payload = {}) => {
+      const targetPath = payload?.path || ''
+      if (!this.isDirectory) return
+      if (!targetPath) {
+        if (this.isRoot || this.expanded) {
+          void this.readDir()
+        }
+        return
+      }
+      if (targetPath === this.node.path) {
+        void this.readDir()
+      }
+    }
+    this.$bus.$on('refreshTreeRequest', this.refreshTreeListener)
+  },
+  beforeUnmount () {
+    if (this.refreshTreeListener) {
+      this.$bus.$off('refreshTreeRequest', this.refreshTreeListener)
     }
   },
   computed: {
@@ -111,11 +138,20 @@ export default {
       return this.activeFilePath === this.node?.path
     },
     nameDialogValid () {
-      return this.isValidNodeName(this.normalizeName(this.nameDialogModel))
+      const normalizedName = this.normalizeName(this.nameDialogModel)
+      if (!this.isValidNodeName(normalizedName)) return false
+      return !this.nameDialogDuplicateExists
     },
     nameDialogErrorMessage () {
-      if (!this.nameDialogModel) return ''
-      return 'Use a valid name without / or \\'
+      const normalizedName = this.normalizeName(this.nameDialogModel)
+      if (!normalizedName) return ''
+      if (!this.isValidNodeName(normalizedName)) {
+        return 'Use a valid name without / or \\'
+      }
+      if (this.nameDialogDuplicateExists) {
+        return 'An item with that name already exists'
+      }
+      return ''
     }
   },
   methods: {
@@ -137,8 +173,8 @@ export default {
       this.contextMenuOpen = false
       await action.call(this)
     },
-    requestRefresh () {
-      this.$bus.$emit('refreshTreeRequest')
+    requestRefresh (path = '') {
+      this.$bus.$emit('refreshTreeRequest', { path })
     },
     getParentPath (targetPath) {
       const lastSlash = targetPath.lastIndexOf('/')
@@ -161,12 +197,52 @@ export default {
       if (name === '.' || name === '..') return false
       return !name.includes('/') && !name.includes('\\')
     },
-    askForName (title, initialValue = '') {
+    async pathExists (targetPath) {
+      const studioFs = this.getStudioFs()
+      if (!studioFs || !targetPath) return false
+      try {
+        const stats = await studioFs.stat(targetPath)
+        return Boolean(stats?.exists)
+      } catch (error) {
+        return false
+      }
+    },
+    async onNameDialogModelChange () {
+      await this.validateNameDialog()
+    },
+    async validateNameDialog () {
+      const token = this.nameDialogValidationToken + 1
+      this.nameDialogValidationToken = token
+      const normalizedName = this.normalizeName(this.nameDialogModel)
+      if (!this.isValidNodeName(normalizedName)) {
+        this.nameDialogDuplicateExists = false
+        return
+      }
+      if (!this.nameDialogParentDir) {
+        this.nameDialogDuplicateExists = false
+        return
+      }
+      const candidatePath = this.buildChildPath(this.nameDialogParentDir, normalizedName)
+      if (candidatePath === this.nameDialogCurrentPath) {
+        this.nameDialogDuplicateExists = false
+        return
+      }
+      const exists = await this.pathExists(candidatePath)
+      if (token !== this.nameDialogValidationToken) return
+      this.nameDialogDuplicateExists = exists
+    },
+    askForName (title, initialValue = '', options = {}) {
       return new Promise((resolve) => {
+        const parentDir = options.parentDir || ''
+        const currentPath = options.currentPath || ''
         this.nameDialogTitle = title
         this.nameDialogModel = initialValue
         this.nameDialogResolver = resolve
+        this.nameDialogParentDir = parentDir
+        this.nameDialogCurrentPath = currentPath
+        this.nameDialogDuplicateExists = false
         this.nameDialogOpen = true
+        void this.validateNameDialog()
       })
     },
     confirmAction (title, message) {
@@ -185,6 +261,9 @@ export default {
       this.nameDialogTitle = ''
       this.nameDialogModel = ''
       this.nameDialogResolver = null
+      this.nameDialogParentDir = ''
+      this.nameDialogCurrentPath = ''
+      this.nameDialogDuplicateExists = false
       resolver?.(value)
     },
     cancelNameDialog () {
@@ -193,6 +272,9 @@ export default {
       this.nameDialogTitle = ''
       this.nameDialogModel = ''
       this.nameDialogResolver = null
+      this.nameDialogParentDir = ''
+      this.nameDialogCurrentPath = ''
+      this.nameDialogDuplicateExists = false
       resolver?.('')
     },
     confirmConfirmDialog () {
@@ -214,13 +296,13 @@ export default {
     async createFile () {
       const studioFs = this.getStudioFs()
       if (!studioFs || !this.node?.path) return
-      const fileName = await this.askForName('New file name')
-      if (!fileName) return
       const parentDir = this.getContainingDirectory()
+      const fileName = await this.askForName('New file name', '', { parentDir })
+      if (!fileName) return
       const newPath = this.buildChildPath(parentDir, fileName)
       try {
         await studioFs.writeFile(newPath, '')
-        this.requestRefresh()
+        this.requestRefresh(parentDir)
       } catch (error) {
         this.readError = `Unable to create file "${fileName}": ${error?.message || String(error)}`
       }
@@ -228,13 +310,13 @@ export default {
     async createFolder () {
       const studioFs = this.getStudioFs()
       if (!studioFs || !this.node?.path) return
-      const folderName = await this.askForName('New folder name')
-      if (!folderName) return
       const parentDir = this.getContainingDirectory()
+      const folderName = await this.askForName('New folder name', '', { parentDir })
+      if (!folderName) return
       const newPath = this.buildChildPath(parentDir, folderName)
       try {
         await studioFs.mkdir(newPath)
-        this.requestRefresh()
+        this.requestRefresh(parentDir)
       } catch (error) {
         this.readError = `Unable to create folder "${folderName}": ${error?.message || String(error)}`
       }
@@ -243,13 +325,16 @@ export default {
       const studioFs = this.getStudioFs()
       if (!studioFs || !this.node?.path || this.isRoot) return
       const currentName = this.node.label || ''
-      const nextName = await this.askForName('Rename to', currentName)
-      if (!nextName || nextName === currentName) return
       const parentDir = this.getParentPath(this.node.path)
+      const nextName = await this.askForName('Rename to', currentName, {
+        parentDir,
+        currentPath: this.node.path
+      })
+      if (!nextName || nextName === currentName) return
       const newPath = this.buildChildPath(parentDir, nextName)
       try {
         await studioFs.rename(this.node.path, newPath)
-        this.requestRefresh()
+        this.requestRefresh(parentDir)
       } catch (error) {
         this.readError = `Unable to rename "${currentName}": ${error?.message || String(error)}`
       }
@@ -264,7 +349,7 @@ export default {
       if (!confirmed) return
       try {
         await studioFs.remove(this.node.path, this.isDirectory)
-        this.requestRefresh()
+        this.requestRefresh(this.getParentPath(this.node.path))
       } catch (error) {
         this.readError = `Unable to delete "${this.node.label}": ${error?.message || String(error)}`
       }
@@ -274,7 +359,7 @@ export default {
       if (!studioFs || !node || !node.path) return false
       try {
         const stats = await studioFs.stat(node.path)
-        return !!stats.isDirectory
+        return !!stats?.isDirectory
       } catch (error) {
         return false
       }

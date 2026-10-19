@@ -14,10 +14,22 @@ const windowDirtyState = new Map()
 ipcMain.handle('studio:cwd', () => process.cwd())
 
 ipcMain.handle('studio:stat', async (_event, targetPath) => {
-  const stats = await stat(targetPath)
-  return {
-    isDirectory: stats.isDirectory(),
-    isFile: stats.isFile()
+  try {
+    const stats = await stat(targetPath)
+    return {
+      exists: true,
+      isDirectory: stats.isDirectory(),
+      isFile: stats.isFile()
+    }
+  } catch (error) {
+    if (error?.code === 'ENOENT') {
+      return {
+        exists: false,
+        isDirectory: false,
+        isFile: false
+      }
+    }
+    throw error
   }
 })
 
