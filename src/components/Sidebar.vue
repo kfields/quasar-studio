@@ -3,8 +3,13 @@
     <div class="button-column" style="float: left">
       <q-btn flat icon="far fa-copy" to="/"/>
       <q-btn flat icon="fas fa-share-alt" to="/graph"/>
+      <q-btn
+        flat
+        :icon="$q.dark.isActive ? 'light_mode' : 'dark_mode'"
+        @click="$q.dark.toggle()"
+      />
     </div>
-    <div style="white-space: nowrap; overflow: hidden; min-height: 100vh !important; background-color: #111111;">
+    <div class="sidebar-content">
       <div v-if="loadError" class="text-negative q-pa-sm">{{ loadError }}</div>
       <ul v-else-if="folder && folder.path" class="q-pa-none q-ma-none">
         <FileTree :node="folder" :opened="true" :isRoot="true"/>

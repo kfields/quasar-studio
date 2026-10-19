@@ -25,7 +25,7 @@ import { basicSetup } from 'codemirror'
 import { defaultKeymap } from '@codemirror/commands'
 import { oneDark } from '@codemirror/theme-one-dark'
 import { dracula } from '@uiw/codemirror-theme-dracula'
-import { githubDark } from '@uiw/codemirror-theme-github'
+import { githubDark, githubLight } from '@uiw/codemirror-theme-github'
 import { monokai } from '@uiw/codemirror-theme-monokai'
 import { nord } from '@uiw/codemirror-theme-nord'
 import { solarizedDark } from '@uiw/codemirror-theme-solarized'
@@ -41,7 +41,7 @@ import { yaml } from '@codemirror/lang-yaml'
 const languageCompartment = new Compartment()
 const themeCompartment = new Compartment()
 const THEME_STORAGE_KEY = 'quasar-studio.editor-theme'
-const THEME_VALUES = ['one-dark', 'monokai', 'dracula', 'github-dark', 'nord', 'solarized-dark']
+const THEME_VALUES = ['auto', 'one-dark', 'monokai', 'dracula', 'github-dark', 'nord', 'solarized-dark']
 
 export default {
   name: 'EditPage',
@@ -53,8 +53,9 @@ export default {
       content: '',
       cm: null,
       loadError: '',
-      selectedTheme: 'one-dark',
+      selectedTheme: 'auto',
       themeOptions: [
+        { label: 'Auto (Quasar Dark Mode)', value: 'auto' },
         { label: 'One Dark', value: 'one-dark' },
         { label: 'Monokai', value: 'monokai' },
         { label: 'Dracula', value: 'dracula' },
@@ -70,6 +71,13 @@ export default {
       this.selectedTheme = savedTheme
     }
     await this.loadEditor()
+  },
+  watch: {
+    '$q.dark.isActive' () {
+      if (this.selectedTheme === 'auto') {
+        this.applyTheme()
+      }
+    }
   },
   beforeRouteUpdate (to, from, next) {
     this.loadContent(to.params.id)
@@ -127,6 +135,9 @@ export default {
       return []
     },
     getThemeExtension () {
+      if (this.selectedTheme === 'auto') {
+        return this.$q.dark.isActive ? oneDark : githubLight
+      }
       if (this.selectedTheme === 'github-dark') return githubDark
       if (this.selectedTheme === 'dracula') return dracula
       if (this.selectedTheme === 'nord') return nord
@@ -149,6 +160,9 @@ export default {
     },
     onThemeChange () {
       window.localStorage.setItem(THEME_STORAGE_KEY, this.selectedTheme)
+      this.applyTheme()
+    },
+    applyTheme () {
       if (!this.cm) return
       this.cm.dispatch({
         effects: themeCompartment.reconfigure(this.getThemeExtension())
