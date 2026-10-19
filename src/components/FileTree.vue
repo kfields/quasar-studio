@@ -4,7 +4,16 @@
       <q-icon v-if="expanded" name="fas fa-caret-up" size=".75em"/>
       <q-icon v-else name="fas fa-caret-right" size=".75em"/>
     </div>
-    <span v-if="!isRoot" class="label" :class="{ 'is-active': isActiveFile }">{{ node.label }}</span>
+    <span
+      v-if="!isRoot"
+      class="label"
+      :class="{ 'is-active': isActiveFile }"
+      tabindex="0"
+      @keydown.stop="handleKeydown"
+    >
+      <q-icon :name="nodeIcon" size="14px" class="filetree-node-icon" />
+      <span class="label-text">{{ node.label }}</span>
+    </span>
     <q-menu
       ref="contextMenu"
       v-model="contextMenuOpen"
@@ -63,7 +72,7 @@
       </q-card>
     </q-dialog>
     <ul v-if="expanded && children.length">
-      <FileTree v-for="(child, index) in children" :node="child" :key="index"/>
+      <FileTree v-for="child in children" :node="child" :key="child.path"/>
     </ul>
     <div v-if="readError" class="text-negative q-pa-sm">{{ readError }}</div>
   </li>
@@ -101,7 +110,11 @@ export default {
   },
   async mounted () {
     this.expanded = this.opened
-    this.isDirectory = await this.getNodeIsDirectory(this.node)
+    if (typeof this.node?.isDirectory === 'boolean') {
+      this.isDirectory = this.node.isDirectory
+    } else {
+      this.isDirectory = await this.getNodeIsDirectory(this.node)
+    }
     if (this.expanded && this.isDirectory) {
       await this.readDir()
     }
@@ -152,6 +165,12 @@ export default {
         return 'An item with that name already exists'
       }
       return ''
+    },
+    nodeIcon () {
+      if (this.isDirectory) {
+        return this.expanded ? 'folder_open' : 'folder'
+      }
+      return 'description'
     }
   },
   methods: {
@@ -369,6 +388,45 @@ export default {
       if (!this.node || !this.node.path) return
       this.$bus.$emit('openFile', this.node.path)
     },
+    async handleKeydown (event) {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault()
+        await this.toggle()
+        return
+      }
+      if (event.key === 'ArrowRight') {
+        event.preventDefault()
+        if (this.isDirectory && !this.expanded) {
+          this.expanded = true
+          await this.readDir()
+        }
+        return
+      }
+      if (event.key === 'ArrowLeft') {
+        event.preventDefault()
+        if (this.isDirectory && this.expanded) {
+          this.expanded = false
+        }
+        return
+      }
+      if (event.key === 'Delete') {
+        if (this.isRoot) return
+        event.preventDefault()
+        await this.deleteNode()
+        return
+      }
+      if (event.key === 'F2') {
+        if (this.isRoot) return
+        event.preventDefault()
+        await this.renameNode()
+      }
+    },
+    sortNodes (left, right) {
+      if (left.isDirectory !== right.isDirectory) {
+        return left.isDirectory ? -1 : 1
+      }
+      return left.label.localeCompare(right.label, undefined, { sensitivity: 'base', numeric: true })
+    },
     async toggle () {
       if (this.isRoot) return
       if (!this.isDirectory) {
@@ -386,10 +444,12 @@ export default {
 
       try {
         const files = await studioFs.readdir(this.node.path)
-        for (const file of files) {
+        const nodes = await Promise.all(files.map(async (file) => {
           const filePath = `${this.node.path}/${file}`
-          this.children.push({ label: file, path: filePath })
-        }
+          const isDirectory = await this.getNodeIsDirectory({ path: filePath })
+          return { label: file, path: filePath, isDirectory }
+        }))
+        this.children = nodes.sort(this.sortNodes)
       } catch (error) {
         this.children = []
         this.readError = `Unable to read directory "${this.node.path}": ${error?.message || String(error)}`
