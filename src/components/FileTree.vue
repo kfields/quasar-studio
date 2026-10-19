@@ -73,6 +73,7 @@ export default {
       this.$bus.$emit('openFile', this.node.path)
     },
     async toggle () {
+      if (this.isRoot) return
       if (!this.isDirectory) {
         this.openFile()
         return
