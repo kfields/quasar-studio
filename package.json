@@ -48,8 +48,7 @@
     "autoprefixer": "^10.4.27",
     "oxfmt": "^0.x",
     "oxlint": "^1.x",
-    "postcss": "^8.5.8",
-    "stylus": "^0.59.0"
+    "postcss": "^8.5.8"
   },
   "engines": {
     "node": ">= 26 || ^24 || ^22.12"
